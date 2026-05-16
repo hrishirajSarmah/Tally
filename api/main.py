@@ -1,15 +1,16 @@
-import os
-
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
+from sqlmodel import Session
+
+from db import get_session
+from settings import settings
 
 app = FastAPI(title="Tally API", version="0.1.0")
 
-_frontend_origin = os.getenv("FRONTEND_ORIGIN", "*")
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[_frontend_origin] if _frontend_origin != "*" else ["*"],
+    allow_origins=["*"] if settings.frontend_origin == "*" else [settings.frontend_origin],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -19,3 +20,11 @@ app.add_middleware(
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/db-health")
+def db_health(session: Session = Depends(get_session)) -> dict[str, object]:
+    row = session.execute(text("SELECT 1 AS ok, current_database() AS db")).first()
+    if row is None:
+        return {"status": "error", "reason": "no row"}
+    return {"status": "ok", "scalar": row[0], "database": row[1]}
