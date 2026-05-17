@@ -323,9 +323,83 @@ Tracking only. **Never** used for ratings or performance scoring.
 
 ---
 
-## 4. Active Session Context
+## 4. Project Lifecycle
 
-**Current objective**: Phase 1 — schema + auth. Sub-tasks 1.1–1.5 complete. **Next**: 1.6 (JWT auth — `POST /auth/login`, `GET /auth/me`, `require_role(Role.X)` dependency).
+Hour ranges sourced from the build brief. Phase markers: **[SHIPPED]** · **[WIP]** · **[TODO]**. Sub-phase markers: `done` / `next` / blank.
+
+### Phase 0 — Foundation & Deploy Pipeline (hours 0–4) [SHIPPED]
+- 0.1 Verify prereqs (node, pnpm, python, uv, git)
+- 0.2 Monorepo skeleton + first commit
+- 0.3 Next.js scaffold in `web/` with pinned versions
+- 0.4 FastAPI scaffold in `api/` with pinned versions
+- 0.5 Local smoke test (both servers, frontend hits backend)
+- 0.6 Push to GitHub
+- 0.7 Vercel deploy (root `web/`)
+- 0.8 Railway deploy (root `api/`)
+- 0.9 Neon project + `DATABASE_URL` in Railway env
+- 0.10 Wire `NEXT_PUBLIC_API_URL` into Vercel
+- 0.11 Production smoke test (both URLs green, CORS works)
+
+### Phase 1 — Schema + Auth (hours 4–12) [WIP — 5/9 done]
+- 1.1 Install backend deps (sqlmodel, alembic, psycopg, passlib, jose, pydantic-settings) `done`
+- 1.2 Define all 6 SQLModel tables `done`
+- 1.3 Wire DB engine + sanity-check connection (`/db-health`) `done`
+- 1.4 Alembic init + first migration `0504db5a33ca` applied to Neon `done`
+- 1.5 Seed script (3 users + FY26 cycle + 6 thrust areas, idempotent) `done`
+- 1.6 Backend JWT auth: `/auth/login`, `/auth/me`, `require_role(Role.X)` dep `next`
+- 1.7 NextAuth credentials provider + login page
+- 1.8 `middleware.ts` + role-specific dashboard stubs (`/employee`, `/manager`, `/admin`)
+- 1.9 Tighten CORS — set `FRONTEND_ORIGIN` on Railway
+
+### Phase 2 — Goal Creation & Approval (hours 12–28) [TODO]
+- 2.1 TanStack Query setup + API client (attach `Authorization: Bearer <jwt>`)
+- 2.2 Employee goal-creation form (draft state)
+- 2.3 Real-time weightage validation (sum=100, each ≥ 10, max 8 goals)
+- 2.4 UoM-conditional fields (`target_value` vs `target_date` vs neither)
+- 2.5 Backend goal endpoints (`POST /goals`, `PATCH /goals/{id}`, `POST /goals/{id}/submit`)
+- 2.6 Manager approval queue (read team goals)
+- 2.7 Manager inline edit during `submitted` state
+- 2.8 Manager approve → status transitions to `locked`
+- 2.9 Shared goals: manager creates one, fan-out to N employees via `shared_parent_id`
+
+### Phase 3 — Quarterly Check-ins (hours 28–40) [TODO]
+- 3.1 `require_active_phase(allowed)` dependency on every check-in endpoint
+- 3.2 Achievement upsert: `PUT /achievements/{goal_id}/{quarter}`
+- 3.3 Progress score formulas exposed via API (compute on read)
+- 3.4 Employee per-quarter check-in form (one row per goal per quarter)
+- 3.5 Manager planned-vs-actual view + comment field
+- 3.6 Admin "advance phase" button (`PATCH /cycles/{id}/phase`)
+- 3.7 Shared-goal achievement propagation (SQLAlchemy `after_update` event listener)
+
+### Phase 4 — Reporting, Audit, Admin (hours 40–48) [TODO]
+- 4.1 Audit log via SQLAlchemy `after_update` event listener on locked Goal
+- 4.2 CSV export endpoint via `StreamingResponse`
+- 4.3 Completion dashboard endpoint (counts by status, grouped by team)
+- 4.4 Admin cycle config UI
+- 4.5 Admin "unlock goal" action with mandatory reason field
+- 4.6 Audit log viewer page (admin only)
+
+### Phase 5 — Bonus: Email + Teams (hours 48–60) [TODO]
+- 5.1 Resend account + API key + verified sender domain
+- 5.2 Email templates (goal submitted, goal approved, check-in reminder)
+- 5.3 Trigger on state transitions via `BackgroundTasks` (non-blocking)
+- 5.4 Teams Incoming Webhook (personal-tenant test channel)
+- 5.5 Adaptive card JSON for goal-submission notification
+- 5.6 Admin "trigger reminder now" button (live-demo control)
+
+### Phase 6 — Polish + Submission (hours 60–72) [TODO]
+- 6.1 README — setup, demo creds, feature list, cost analysis (criterion 6)
+- 6.2 Architecture diagram → `docs/architecture.pdf`
+- 6.3 Demo script written verbatim, timed to 5 min, rehearsed twice
+- 6.4 Production smoke test every must-have flow end-to-end
+- 6.5 `pg_dump` of Neon as backup before demo
+- 6.6 Final deploy + sanity check
+
+---
+
+## 5. Active Session Context
+
+**Current objective**: §4 Phase 1 (Schema + Auth). Sub-tasks 1.1–1.5 shipped. **Next**: 1.6 (Backend JWT auth — `POST /auth/login`, `GET /auth/me`, `require_role(Role.X)` dependency).
 
 **Open decisions / blockers**:
 - CORS currently wildcard (`allow_origins=["*"]`). To be tightened in 1.9 by setting `FRONTEND_ORIGIN=https://tally-five-orpin.vercel.app` on Railway.
