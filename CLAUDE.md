@@ -334,9 +334,9 @@ Tracking only. **Never** used for ratings or performance scoring.
 **Phase 1 gate (not yet met)**: all 3 demo users log in via the production Vercel URL, each lands on its role-specific dashboard stub, `GET /api/auth/me` (with JWT) returns the correct user+role, all 6 tables visible in Neon dashboard with seeded data.
 
 **Working protocol for sub-phases (1.6 onwards)**:
-The user follows a two-prompt build workflow, files at `prompts/protocol.md` and `prompts/curator.md` (gitignored, local-only — ask the user to share if not present).
-- Before each sub-phase: user generates a reading list via the **curator** prompt and does Layer 0 (reading) independently.
-- During the sub-phase: deliver the **7-Layer Build Protocol** (`prompts/protocol.md`) — one layer per response, never collapsed.
+Deliver the **7-Layer Build Protocol** documented in `prompts/protocol.md` (gitignored, local-only — ask the user to share if not present). Strictly adhere to it. **Do not** reference or follow any other prompt file (including `prompts/curator.md` if present) — the user has explicitly opted out.
+- One layer per response, never collapsed. Wait for the user's input between each layer.
+- Layer 0 (reading) is done independently by the user before invoking the protocol — wait for "Layer 0 done" before starting Layer 1. Do not suggest a reading list or topics to read.
 - Active checkpoints: Layer 1 wants the user's one-sentence summary back; Layer 2 wants their connection prediction; Layer 3 compares prediction to actual behavior; Layer 4 wants 2+ failure modes; Layer 5 cites doc pages; Layer 6 includes a 5-second predict-before-reveal pause per file; Layer 7 produces 3 LEARNINGS.md questions + 1–2 transferable idioms.
 - Rule: if the user's prediction is wrong at any layer, ask them to refine before explaining the gap.
 
