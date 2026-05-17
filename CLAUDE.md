@@ -319,27 +319,33 @@ Tracking only. **Never** used for ratings or performance scoring.
 - `NEXT_PUBLIC_*` changes only apply on a fresh build. After updating, redeploy with "Use existing Build Cache" **off**.
 - Railway does not always auto-redeploy on env var changes alone. After changing a var, manually click Deploy.
 - Neon's project-creation splash shows the direct connection string with no edit affordance — convert to pooled by manually inserting `-pooler` after the endpoint ID in the host.
-- `passlib 1.7.4` + `bcrypt 5.x` may emit a `__about__` deprecation warning. Hashing still works; suppress or downgrade `bcrypt` only if it actually errors.
+- `passlib 1.7.4` + `bcrypt 5.x` **crashes at import time**. passlib's `detect_wrap_bug` probe at module load uses a password >72 bytes; bcrypt 5.0 raises `ValueError` (4.x silently truncated). Fix: pin `bcrypt==4.3.0` (committed in 1.5). passlib then emits a harmless `(trapped) error reading bcrypt version` log line at first use — its version-detection fallback — but hashing + verify both work.
 
 ---
 
 ## 4. Active Session Context
 
-**Current objective**: Phase 1 — schema + auth. Sub-tasks 1.1–1.4 complete. **Next**: 1.5 (idempotent seed script for 3 users + 1 active cycle + 6 thrust areas).
+**Current objective**: Phase 1 — schema + auth. Sub-tasks 1.1–1.5 complete. **Next**: 1.6 (JWT auth — `POST /auth/login`, `GET /auth/me`, `require_role(Role.X)` dependency).
 
 **Open decisions / blockers**:
-- `passlib 1.7.4` + `bcrypt 5.0.0` compatibility unverified — will surface during 1.5 password hashing. Fallback options: downgrade bcrypt to `4.x`, or switch from passlib to direct `bcrypt` calls.
 - CORS currently wildcard (`allow_origins=["*"]`). To be tightened in 1.9 by setting `FRONTEND_ORIGIN=https://tally-five-orpin.vercel.app` on Railway.
-- No Railway-side migration automation. All `alembic upgrade head` runs are local; Railway redeploy of `api/` does not migrate. Decide before Phase 1.6 whether to wire alembic into Railway's release phase.
+- No Railway-side migration automation. All `alembic upgrade head` runs are local; Railway redeploy of `api/` does not migrate. Decide before adding a second migration whether to wire alembic into Railway's release phase.
 
 **Phase 1 gate (not yet met)**: all 3 demo users log in via the production Vercel URL, each lands on its role-specific dashboard stub, `GET /api/auth/me` (with JWT) returns the correct user+role, all 6 tables visible in Neon dashboard with seeded data.
 
+**Working protocol for sub-phases (1.6 onwards)**:
+The user follows a two-prompt build workflow, files at `prompts/protocol.md` and `prompts/curator.md` (gitignored, local-only — ask the user to share if not present).
+- Before each sub-phase: user generates a reading list via the **curator** prompt and does Layer 0 (reading) independently.
+- During the sub-phase: deliver the **7-Layer Build Protocol** (`prompts/protocol.md`) — one layer per response, never collapsed.
+- Active checkpoints: Layer 1 wants the user's one-sentence summary back; Layer 2 wants their connection prediction; Layer 3 compares prediction to actual behavior; Layer 4 wants 2+ failure modes; Layer 5 cites doc pages; Layer 6 includes a 5-second predict-before-reveal pause per file; Layer 7 produces 3 LEARNINGS.md questions + 1–2 transferable idioms.
+- Rule: if the user's prediction is wrong at any layer, ask them to refine before explaining the gap.
+
 **Recent commits** (most recent first):
+- `0ee6655` phase 1.5: idempotent seed (3 users + FY26 cycle + 6 thrust areas) + bcrypt 4.3.0 pin
+- `0801219` docs: refine CLAUDE.md as operational manual, extract cost optimization to docs/
 - `12b4e5f` phase 1.4: alembic scaffold + 0504db5a33ca initial schema
 - `02612ed` phase 1.3: typed settings + sqlmodel engine + /db-health
 - `b1a7a0c` phase 1.2: define 6 SQLModel tables
-- `93d56dd` phase 1.1: add deps for db + auth
-- `6720ba4` add web/public/ (Vercel requirement)
 
 ---
 
